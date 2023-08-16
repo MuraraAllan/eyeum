@@ -1,9 +1,12 @@
 import type { V2_MetaFunction } from "@remix-run/node";
-import Stack from 'react-bootstrap/Stack';
+
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Badge, Col, Row, Spinner, Stack } from "react-bootstrap";
+import { useFindPlayerPositionalAttributes } from "~/hooks/PlayerHooks";
+import { BasicTable } from "~/components/BasicTable";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -15,45 +18,68 @@ export const meta: V2_MetaFunction = () => {
 export default function Index() {
   const [teamName, setTeamName] = useState('');
   const [playerName, setPlayerName] = useState('');
+  
+  const searchString = useMemo(() => {
+    if (teamName.length > 0) return teamName 
+    if (playerName.length > 0) return playerName
+    return "Sam Cox"
+  }, [teamName, playerName])
 
+  const data = useFindPlayerPositionalAttributes(searchString)
+  console.log('it is', data)
   const handleSubmit = (e) => {
     e.preventDefault();
     // Here, you can perform actions with the form data, like sending it to an API or processing it.
     console.log('Team Name:', teamName);
     console.log('Player Name:', playerName);
   };
-
+  
   return (
-    <Container>
+    <Stack gap={5} direction="vertical" className="justify-content-md-center align-items-center">
       <h2 className="mb-4">Player Positional Rating</h2> {/* Title */}
-      <Stack direction="horizontal"  gap={3}>
-        <Form.Group controlId="teamName">
-          <Form.Label>Team Name</Form.Label>
+      <Row>
+        <Form.Label>Team Name</Form.Label>
           <Form.Control
             className="me-auto"
             type="text"
             placeholder="Enter team name"
             value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
+            onChange={(e) => {
+              setPlayerName('')
+              setTeamName(e.target.value)
+            }}
           />
-        </Form.Group>
-        <div className="vr" />
-
-        <Form.Group controlId="playerName">
-          <Form.Label>Player Name</Form.Label>
+        <Form.Label>Player Name</Form.Label>
           <Form.Control
             type="text"
             className="me-auto"
             placeholder="Enter player name"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={(e) => {
+              setTeamName('')  
+              setPlayerName(e.target.value)
+            }}
           />
-        </Form.Group>
-
-        <Button className="mt-auto" variant="primary" type="submit">
-          Submit
-        </Button>
-      </Stack>
-    </Container>
+      </Row>
+      <Row  className="justify-content-center">
+        { data.loading ?
+          <>
+            <span  className="text-center">Loading...</span>
+            <Spinner animation="border" role="status">
+            </Spinner>
+          </> 
+          : <>
+            {data.data?.players.length > 0 ? 
+              <>
+                <h3> Results for : {searchString} </h3>
+                <h5> Total : {data.data?.players.length} </h5>
+                <BasicTable data={data.data?.players ?? []} />
+              </>
+            : null}
+          </>
+        }
+      </Row>
+     
+    </Stack>
   );
 }

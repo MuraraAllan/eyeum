@@ -11,6 +11,7 @@ import { Response } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
+import { ApolloClient, ApolloProvider, InMemoryCache, createHttpLink } from "@apollo/client";
 
 const ABORT_DELAY = 5_000;
 
@@ -91,14 +92,26 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
+  const client = new ApolloClient({
+    ssrMode: true,
+    cache: new InMemoryCache(),
+    link: createHttpLink({
+      uri: "https://play-test.api.footium.club/api/graphql", // from Apollo's Voyage tutorial series (https://www.apollographql.com/tutorials/voyage-part1/)
+      headers: request.headers,
+      credentials: request.credentials ?? "include", // or "same-origin" if your backend server is the same domain
+    }),
+  });
+
   return new Promise((resolve, reject) => {
     let shellRendered = false;
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer
-        context={remixContext}
-        url={request.url}
-        abortDelay={ABORT_DELAY}
-      />,
+      <ApolloProvider client={client}>
+        <RemixServer
+          context={remixContext}
+          url={request.url}
+          abortDelay={ABORT_DELAY}
+        />
+      </ApolloProvider>,
       {
         onShellReady() {
           shellRendered = true;

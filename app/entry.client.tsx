@@ -12,6 +12,7 @@ import { hydrateRoot } from "react-dom/client";
 
 
 
+
 function Client() {
   const client = new ApolloClient({
     cache: new InMemoryCache().restore(window.__APOLLO_STATE__),
