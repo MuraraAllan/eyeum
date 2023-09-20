@@ -60,7 +60,7 @@ export function BasicTable({ data } : { data : any } ) {
           const roundedValue = info.getValue().positionalRating.toFixed(2) 
           return (roundedValue - (roundedValue * (info.getValue().type * 5 / 100))).toFixed(2)
         },
-        header: () => <span>{playerAttrib.position}</span>,
+        header: () => <span >{playerAttrib.position}</span>,
       })
     })
 
